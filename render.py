@@ -48,7 +48,10 @@ def render_html(ranked: list[dict], generated_at: datetime, board_results: list[
     rows = []
     for i, t in enumerate(ranked, start=1):
         tag = html.escape(board_names.get(t["board"], t["board"]))
-        title = html.escape(t["title"])
+        # 5ch titles embed literal numeric character refs (e.g. "&#12317;") for
+        # glyphs Shift_JIS can't represent. Round-trip through unescape+escape so
+        # those render as intended while any literal <, >, & etc. stay safely escaped.
+        title = html.escape(html.unescape(t["title"]))
         url = html.escape(t["url"])
         rows.append(
             f"""<li>
