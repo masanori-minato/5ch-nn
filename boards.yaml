@@ -1,0 +1,27 @@
+# 5ch-nn board configuration
+# サーバーのサブドメインは5ch側の都合で変わることがある（既知の保守ポイント）。
+# 取得に失敗し続ける板が出たら、bbsmenu.html (https://menu.5ch.io/bbsmenu.html) で
+# 現在のURLを確認してここを更新する。
+
+user_agent: "5ch-nn-bot/1.0 (+https://github.com/masanori-minato/5ch-nn)"
+timeout: 15
+max_retries: 1
+request_delay: 2
+top_n: 50
+
+boards:
+  - key: newsplus
+    name: "ニュース速報+"
+    url: "https://asahi.5ch.io/newsplus/"
+  - key: news
+    name: "ニュース速報"
+    url: "https://hayabusa9.5ch.io/news/"
+  - key: mnewsplus
+    name: "芸能・スポーツ速報+"
+    url: "https://hayabusa9.5ch.io/mnewsplus/"
+  - key: news4plus
+    name: "アジアニュース+"
+    url: "https://lavender.5ch.io/news4plus/"
+  - key: poverty
+    name: "ニュース速報(嫌儲)"
+    url: "https://greta.5ch.io/poverty/"
