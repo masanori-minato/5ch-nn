@@ -20,7 +20,7 @@ boards:
     name: "芸能・スポーツ速報+"
     url: "https://hayabusa9.5ch.io/mnewsplus/"
   - key: news4plus
-    name: "アジアニュース+"
+    name: "東アジアニュース+"
     url: "https://lavender.5ch.io/news4plus/"
   - key: poverty
     name: "ニュース速報(嫌儲)"
