@@ -1,8 +1,13 @@
 name: build-and-deploy
 
 on:
+  # GitHub's native schedule trigger silently throttles high-frequency cron
+  # (observed: */15 collapsed to ~70min avg, up to 2.5h gaps). Real 15-minute
+  # cadence comes from an external service calling the workflow_dispatch API
+  # instead (see README). This hourly schedule is just a fallback in case
+  # that external caller goes down.
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "0 * * * *"
   workflow_dispatch: {}
 
 permissions:
