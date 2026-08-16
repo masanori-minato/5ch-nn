@@ -52,6 +52,14 @@ li { background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 10px
 .tab-btn.active { background: #1a56db; border-color: #1a56db; color: #fff; }
 footer { margin-top: 24px; color: #999; font-size: 0.8rem; border-top: 1px solid #ddd; padding-top: 10px; }
 footer ul { padding-left: 1.2em; }
+
+@media (max-width: 480px) {
+  body { padding: 10px; }
+  h1 { font-size: 1.15rem; }
+  li { flex-wrap: wrap; padding: 8px 10px; }
+  .stats { order: 1; margin-left: auto; }
+  .title { order: 2; flex-basis: 100%; margin-top: 4px; }
+}
 """
 
 # (tab id, nav label) in display order — a hand-picked subset/order distinct
