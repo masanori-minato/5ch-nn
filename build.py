@@ -22,8 +22,15 @@ def main() -> int:
     new_threads = rank.update_state(state.get("threads", {}), board_results, now)
     rank.save_state(STATE_PATH, {"updated_at": now.isoformat(), "threads": new_threads})
 
-    ranked = rank.top_n(new_threads, cfg.get("top_n", 50))
-    html_str = render.render_html(ranked, now, board_results)
+    top_n = cfg.get("top_n", 50)
+    ranked = rank.top_n(new_threads, top_n)
+    board_rankings = {
+        board["key"]: rank.top_n(
+            {k: v for k, v in new_threads.items() if v["board"] == board["key"]}, top_n
+        )
+        for board in cfg["boards"]
+    }
+    html_str = render.render_html(ranked, board_rankings, now, board_results)
     render.write_html(DOCS_PATH, html_str)
 
     ok = sum(1 for r in board_results if r.ok)

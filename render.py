@@ -45,9 +45,25 @@ li { background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 10px
 .v-warm { color: #1c5cab; }
 .v-mild { color: #3987e5; }
 .v-cool { color: #86b6ef; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.tab-btn { font: inherit; font-size: 0.82rem; padding: 6px 12px; border-radius: 999px;
+           border: 1px solid #ddd; background: #fff; color: #444; cursor: pointer; }
+.tab-btn:hover { border-color: #1a56db; }
+.tab-btn.active { background: #1a56db; border-color: #1a56db; color: #fff; }
 footer { margin-top: 24px; color: #999; font-size: 0.8rem; border-top: 1px solid #ddd; padding-top: 10px; }
 footer ul { padding-left: 1.2em; }
 """
+
+# (tab id, nav label) in display order — a hand-picked subset/order distinct
+# from boards.yaml's fetch order, matching how the boards are commonly referred to.
+NAV_TABS = [
+    ("all", "総合"),
+    ("newsplus", "ニュー速＋"),
+    ("mnewsplus", "芸スポ＋"),
+    ("news", "ニュー速"),
+    ("news4plus", "東アジア＋"),
+    ("poverty", "ニュー速（嫌儲）"),
+]
 
 
 def _fmt_jst(dt: datetime) -> str:
@@ -76,13 +92,10 @@ def _velocity_class(rank: int, total: int) -> str:
     return "v-cool"
 
 
-def render_html(ranked: list[dict], generated_at: datetime, board_results: list[BoardResult]) -> str:
-    board_names = {r.key: r.name for r in board_results}
-    ok_count = sum(1 for r in board_results if r.ok)
-
-    total = len(ranked)
+def _render_rows(items: list[dict], board_names: dict[str, str]) -> str:
+    total = len(items)
     rows = []
-    for i, t in enumerate(ranked, start=1):
+    for i, t in enumerate(items, start=1):
         tag = html.escape(board_names.get(t["board"], t["board"]))
         # 5ch titles embed literal numeric character refs (e.g. "&#12317;") for
         # glyphs Shift_JIS can't represent. Round-trip through unescape+escape so
@@ -98,6 +111,28 @@ def render_html(ranked: list[dict], generated_at: datetime, board_results: list[
   <span class="stats"><span class="res">{t['res_count']}レス</span><span class="velocity {vclass}">{t['velocity']:.1f}/h</span></span>
 </li>"""
         )
+    return "".join(rows)
+
+
+def render_html(
+    ranked: list[dict],
+    board_rankings: dict[str, list[dict]],
+    generated_at: datetime,
+    board_results: list[BoardResult],
+) -> str:
+    board_names = {r.key: r.name for r in board_results}
+    ok_count = sum(1 for r in board_results if r.ok)
+
+    lists_by_tab = {"all": ranked, **board_rankings}
+    nav_buttons = "".join(
+        f'<button class="tab-btn{" active" if tab_id == "all" else ""}" data-tab="{tab_id}">{label}</button>'
+        for tab_id, label in NAV_TABS
+    )
+    panels = "".join(
+        f'<ol id="tab-{tab_id}" class="ranklist"{"" if tab_id == "all" else " hidden"}>'
+        f"{_render_rows(lists_by_tab.get(tab_id, []), board_names)}</ol>"
+        for tab_id, _ in NAV_TABS
+    )
 
     status_lines = "".join(f"<li>{s}</li>" for s in _board_status_lines(board_results))
 
@@ -116,14 +151,23 @@ def render_html(ranked: list[dict], generated_at: datetime, board_results: list[
 <h1>5ch-nn 勢いランキング</h1>
 </div>
 <p class="meta">更新: {_fmt_jst(generated_at)}（15分毎に自動更新） / 板: {ok_count}/{len(board_results)} OK</p>
-<ol>
-{"".join(rows)}
-</ol>
+<nav class="tabs">{nav_buttons}</nav>
+{panels}
 <footer>
 <p>個人が趣味で作成した非公式のまとめサイトです。各スレッドへのリンク先は5ch.netの該当板です。</p>
 <p>板ステータス:</p>
 <ul>{status_lines}</ul>
 </footer>
+<script>
+document.querySelectorAll(".tab-btn").forEach(function (btn) {{
+  btn.addEventListener("click", function () {{
+    document.querySelectorAll(".tab-btn").forEach(function (b) {{ b.classList.remove("active"); }});
+    document.querySelectorAll(".ranklist").forEach(function (ol) {{ ol.hidden = true; }});
+    btn.classList.add("active");
+    document.getElementById("tab-" + btn.dataset.tab).hidden = false;
+  }});
+}});
+</script>
 </body>
 </html>
 """
