@@ -23,7 +23,14 @@ li { background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 10px
 .title { flex: 1; }
 .title a { color: #222; text-decoration: none; }
 .title a:hover { text-decoration: underline; }
-.stats { color: #888; font-size: 0.8rem; white-space: nowrap; }
+.stats { font-size: 0.8rem; white-space: nowrap; }
+.res { background: #fdece4; color: #a8431a; font-size: 0.75rem; padding: 2px 6px; border-radius: 3px;
+       margin-right: 4px; }
+.velocity { font-weight: 600; }
+.v-hot { color: #0d366b; font-weight: 700; }
+.v-warm { color: #1c5cab; }
+.v-mild { color: #3987e5; }
+.v-cool { color: #86b6ef; }
 footer { margin-top: 24px; color: #999; font-size: 0.8rem; border-top: 1px solid #ddd; padding-top: 10px; }
 footer ul { padding-left: 1.2em; }
 """
@@ -41,10 +48,25 @@ def _board_status_lines(board_results: list[BoardResult]) -> list[str]:
     return lines
 
 
+def _velocity_class(rank: int, total: int) -> str:
+    # Tiered by rank (the list is already velocity-sorted) rather than a fixed
+    # threshold, so the coloring stays meaningful whether it's a quiet night
+    # or a breaking-news spike.
+    frac = rank / total
+    if frac <= 0.1:
+        return "v-hot"
+    if frac <= 0.3:
+        return "v-warm"
+    if frac <= 0.6:
+        return "v-mild"
+    return "v-cool"
+
+
 def render_html(ranked: list[dict], generated_at: datetime, board_results: list[BoardResult]) -> str:
     board_names = {r.key: r.name for r in board_results}
     ok_count = sum(1 for r in board_results if r.ok)
 
+    total = len(ranked)
     rows = []
     for i, t in enumerate(ranked, start=1):
         tag = html.escape(board_names.get(t["board"], t["board"]))
@@ -53,12 +75,13 @@ def render_html(ranked: list[dict], generated_at: datetime, board_results: list[
         # those render as intended while any literal <, >, & etc. stay safely escaped.
         title = html.escape(html.unescape(t["title"]))
         url = html.escape(t["url"])
+        vclass = _velocity_class(i, total)
         rows.append(
             f"""<li>
   <span class="rank">{i}</span>
   <span class="tag">{tag}</span>
   <span class="title"><a href="{url}" target="_blank" rel="noopener">{title}</a></span>
-  <span class="stats">{t['res_count']}レス &middot; {t['velocity']:.1f}/h</span>
+  <span class="stats"><span class="res">{t['res_count']}レス</span><span class="velocity {vclass}">{t['velocity']:.1f}/h</span></span>
 </li>"""
         )
 
