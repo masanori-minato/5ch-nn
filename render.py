@@ -13,7 +13,7 @@ JST = timezone(timedelta(hours=9))
 # "Ikioi bars" favicon: three bars rising in height and in the same
 # v-cool/v-mild/v-hot blues used for velocity below, so the tab icon and the
 # ranking list read as one system.
-FAVICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+FAVICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" class="logo" viewBox="0 0 32 32">
 <rect x="0" y="0" width="32" height="32" rx="7" fill="#eaf1fc"/>
 <rect x="6.5" y="16" width="5" height="9" rx="1.4" fill="#86b6ef"/>
 <rect x="13.5" y="11" width="5" height="14" rx="1.4" fill="#3987e5"/>
@@ -24,7 +24,9 @@ FAVICON_HREF = "data:image/svg+xml;base64," + base64.b64encode(FAVICON_SVG.encod
 STYLE = """
 body { font-family: "Hiragino Sans", "Yu Gothic", sans-serif; background: #f4f4f4; color: #222;
        max-width: 880px; margin: 0 auto; padding: 16px; }
-h1 { font-size: 1.4rem; margin-bottom: 4px; }
+.brand { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.logo { width: 32px; height: 32px; flex: none; }
+h1 { font-size: 1.4rem; margin: 0; }
 .meta { color: #666; font-size: 0.85rem; margin-bottom: 16px; }
 ol { list-style: none; margin: 0; padding: 0; }
 li { background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 10px 12px; margin-bottom: 6px;
@@ -109,7 +111,10 @@ def render_html(ranked: list[dict], generated_at: datetime, board_results: list[
 <style>{STYLE}</style>
 </head>
 <body>
+<div class="brand">
+{FAVICON_SVG}
 <h1>5ch-nn 勢いランキング</h1>
+</div>
 <p class="meta">更新: {_fmt_jst(generated_at)}（15分毎に自動更新） / 板: {ok_count}/{len(board_results)} OK</p>
 <ol>
 {"".join(rows)}
