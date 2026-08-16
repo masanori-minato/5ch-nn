@@ -2,12 +2,24 @@
 
 from __future__ import annotations
 
+import base64
 import html
 from datetime import datetime, timedelta, timezone
 
 from collect import BoardResult
 
 JST = timezone(timedelta(hours=9))
+
+# "Ikioi bars" favicon: three bars rising in height and in the same
+# v-cool/v-mild/v-hot blues used for velocity below, so the tab icon and the
+# ranking list read as one system.
+FAVICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+<rect x="0" y="0" width="32" height="32" rx="7" fill="#eaf1fc"/>
+<rect x="6.5" y="16" width="5" height="9" rx="1.4" fill="#86b6ef"/>
+<rect x="13.5" y="11" width="5" height="14" rx="1.4" fill="#3987e5"/>
+<rect x="20.5" y="6" width="5" height="19" rx="1.4" fill="#0d366b"/>
+</svg>"""
+FAVICON_HREF = "data:image/svg+xml;base64," + base64.b64encode(FAVICON_SVG.encode("utf-8")).decode("ascii")
 
 STYLE = """
 body { font-family: "Hiragino Sans", "Yu Gothic", sans-serif; background: #f4f4f4; color: #222;
@@ -93,6 +105,7 @@ def render_html(ranked: list[dict], generated_at: datetime, board_results: list[
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>5ch-nn</title>
+<link rel="icon" type="image/svg+xml" href="{FAVICON_HREF}">
 <style>{STYLE}</style>
 </head>
 <body>
