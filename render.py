@@ -22,35 +22,75 @@ FAVICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" class="logo" viewBox="0
 FAVICON_HREF = "data:image/svg+xml;base64," + base64.b64encode(FAVICON_SVG.encode("utf-8")).decode("ascii")
 
 STYLE = """
-body { font-family: "Hiragino Sans", "Yu Gothic", sans-serif; background: #f4f4f4; color: #222;
+:root {
+  color-scheme: light;
+  --bg: #f4f4f4; --fg: #222; --muted: #666; --footer-fg: #999;
+  --card-bg: #fff; --card-border: #ddd; --rank: #999;
+  --tag-bg: #e8f0fe; --tag-fg: #1a56db;
+  --link: #222;
+  --res-bg: #fdece4; --res-fg: #a8431a;
+  --v-hot: #0d366b; --v-warm: #1c5cab; --v-mild: #3987e5; --v-cool: #86b6ef;
+  --tab-bg: #fff; --tab-border: #ddd; --tab-fg: #444;
+  --tab-active-bg: #1a56db; --tab-active-border: #1a56db; --tab-active-fg: #fff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #14171d; --fg: #e4e6eb; --muted: #9099a8; --footer-fg: #7b8291;
+    --card-bg: #1c212b; --card-border: #2b3140; --rank: #6b7280;
+    --tag-bg: #1c3a5e; --tag-fg: #8fc0ff;
+    --link: #e4e6eb;
+    --res-bg: #3a2418; --res-fg: #ff9d6c;
+    --v-hot: #8fc0ff; --v-warm: #5b9de8; --v-mild: #3987e5; --v-cool: #4a6483;
+    --tab-bg: #1c212b; --tab-border: #2b3140; --tab-fg: #b8c0cf;
+    --tab-active-bg: #3987e5; --tab-active-border: #3987e5; --tab-active-fg: #0b0d12;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #14171d; --fg: #e4e6eb; --muted: #9099a8; --footer-fg: #7b8291;
+  --card-bg: #1c212b; --card-border: #2b3140; --rank: #6b7280;
+  --tag-bg: #1c3a5e; --tag-fg: #8fc0ff;
+  --link: #e4e6eb;
+  --res-bg: #3a2418; --res-fg: #ff9d6c;
+  --v-hot: #8fc0ff; --v-warm: #5b9de8; --v-mild: #3987e5; --v-cool: #4a6483;
+  --tab-bg: #1c212b; --tab-border: #2b3140; --tab-fg: #b8c0cf;
+  --tab-active-bg: #3987e5; --tab-active-border: #3987e5; --tab-active-fg: #0b0d12;
+}
+body { font-family: "Hiragino Sans", "Yu Gothic", sans-serif; background: var(--bg); color: var(--fg);
        max-width: 880px; margin: 0 auto; padding: 16px; }
 .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
 .logo { width: 32px; height: 32px; flex: none; }
 h1 { font-size: 1.4rem; margin: 0; }
-.meta { color: #666; font-size: 0.85rem; margin-bottom: 16px; }
+.theme-toggle { margin-left: auto; font: inherit; font-size: 0.8rem; padding: 6px 10px; border-radius: 999px;
+                border: 1px solid var(--card-border); background: var(--card-bg); color: var(--fg);
+                cursor: pointer; white-space: nowrap; }
+.theme-toggle:hover { border-color: var(--tag-fg); }
+.meta { color: var(--muted); font-size: 0.85rem; margin-bottom: 16px; }
 ol { list-style: none; margin: 0; padding: 0; }
-li { background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 10px 12px; margin-bottom: 6px;
-     display: flex; gap: 10px; align-items: baseline; }
-.rank { color: #999; font-weight: bold; min-width: 2em; }
-.tag { background: #e8f0fe; color: #1a56db; font-size: 0.75rem; padding: 2px 6px; border-radius: 3px;
+li { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 4px; padding: 10px 12px;
+     margin-bottom: 6px; display: flex; gap: 10px; align-items: baseline; }
+.rank { color: var(--rank); font-weight: bold; min-width: 2em; }
+.tag { background: var(--tag-bg); color: var(--tag-fg); font-size: 0.75rem; padding: 2px 6px; border-radius: 3px;
        white-space: nowrap; }
 .title { flex: 1; }
-.title a { color: #222; text-decoration: none; }
+.title a { color: var(--link); text-decoration: none; }
 .title a:hover { text-decoration: underline; }
 .stats { font-size: 0.8rem; white-space: nowrap; }
-.res { background: #fdece4; color: #a8431a; font-size: 0.75rem; padding: 2px 6px; border-radius: 3px;
+.res { background: var(--res-bg); color: var(--res-fg); font-size: 0.75rem; padding: 2px 6px; border-radius: 3px;
        margin-right: 4px; }
 .velocity { font-weight: 600; }
-.v-hot { color: #0d366b; font-weight: 700; }
-.v-warm { color: #1c5cab; }
-.v-mild { color: #3987e5; }
-.v-cool { color: #86b6ef; }
+.v-hot { color: var(--v-hot); font-weight: 700; }
+.v-warm { color: var(--v-warm); }
+.v-mild { color: var(--v-mild); }
+.v-cool { color: var(--v-cool); }
 .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
 .tab-btn { font: inherit; font-size: 0.82rem; padding: 6px 12px; border-radius: 999px;
-           border: 1px solid #ddd; background: #fff; color: #444; cursor: pointer; }
-.tab-btn:hover { border-color: #1a56db; }
-.tab-btn.active { background: #1a56db; border-color: #1a56db; color: #fff; }
-footer { margin-top: 24px; color: #999; font-size: 0.8rem; border-top: 1px solid #ddd; padding-top: 10px; }
+           border: 1px solid var(--tab-border); background: var(--tab-bg); color: var(--tab-fg); cursor: pointer; }
+.tab-btn:hover { border-color: var(--tag-fg); }
+.tab-btn.active { background: var(--tab-active-bg); border-color: var(--tab-active-border); color: var(--tab-active-fg); }
+footer { margin-top: 24px; color: var(--footer-fg); font-size: 0.8rem; border-top: 1px solid var(--card-border);
+         padding-top: 10px; }
 footer ul { padding-left: 1.2em; }
 
 @media (max-width: 480px) {
@@ -151,12 +191,21 @@ def render_html(
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>5ch-nn</title>
 <link rel="icon" type="image/svg+xml" href="{FAVICON_HREF}">
+<script>
+(function () {{
+  try {{
+    var t = localStorage.getItem("5ch-nn-theme");
+    if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+  }} catch (e) {{}}
+}})();
+</script>
 <style>{STYLE}</style>
 </head>
 <body>
 <div class="brand">
 {FAVICON_SVG}
 <h1>5ch-nn 勢いランキング</h1>
+<button id="theme-toggle" class="theme-toggle" type="button"></button>
 </div>
 <p class="meta">更新: {_fmt_jst(generated_at)}（15分毎に自動更新） / 板: {ok_count}/{len(board_results)} OK</p>
 <nav class="tabs">{nav_buttons}</nav>
@@ -175,6 +224,28 @@ document.querySelectorAll(".tab-btn").forEach(function (btn) {{
     document.getElementById("tab-" + btn.dataset.tab).hidden = false;
   }});
 }});
+(function () {{
+  var btn = document.getElementById("theme-toggle");
+  var root = document.documentElement;
+  var KEY = "5ch-nn-theme";
+  function current() {{
+    return root.getAttribute("data-theme") ||
+      (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  }}
+  function updateLabel() {{
+    var dark = current() === "dark";
+    btn.textContent = dark ? "☀️ ライト" : "🌙 ダーク";
+    btn.setAttribute("aria-pressed", String(dark));
+    btn.setAttribute("aria-label", "ダークモード切り替え");
+  }}
+  btn.addEventListener("click", function () {{
+    var next = current() === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try {{ localStorage.setItem(KEY, next); }} catch (e) {{}}
+    updateLabel();
+  }});
+  updateLabel();
+}})();
 </script>
 </body>
 </html>
