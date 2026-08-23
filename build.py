@@ -5,11 +5,13 @@ from __future__ import annotations
 import sys
 from datetime import datetime, timezone
 
+import archive
 import collect
 import rank
 import render
 
 STATE_PATH = "state/threads.json"
+ARCHIVE_PATH = "state/archive.db"
 DOCS_PATH = "docs/index.html"
 
 
@@ -30,7 +32,22 @@ def main() -> int:
         )
         for board in cfg["boards"]
     }
-    html_str = render.render_html(ranked, board_rankings, now, board_results)
+
+    # Archive every run's observations (kept 90 days) so a weekly ranking can be
+    # added later without needing to backfill history. Only the 24h/total view
+    # is wired up to the UI for now.
+    archive_conn = archive.connect(ARCHIVE_PATH)
+    archive.record_observations(archive_conn, board_results, now)
+    archive.prune(archive_conn, now, cfg.get("archive_retention_days", 90))
+    deltas_24h = archive.compute_deltas(archive_conn, board_results, now, 24)
+    archive_conn.commit()
+    archive_conn.close()
+
+    periods = {
+        "now": {"all": ranked, **board_rankings},
+        "24h": {"all": archive.top_n_by_delta(deltas_24h, top_n)},
+    }
+    html_str = render.render_html(periods, now, board_results)
     render.write_html(DOCS_PATH, html_str)
 
     ok = sum(1 for r in board_results if r.ok)

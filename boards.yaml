@@ -8,6 +8,7 @@ timeout: 15
 max_retries: 1
 request_delay: 2
 top_n: 50
+archive_retention_days: 90
 
 boards:
   - key: newsplus
