@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import base64
 import html
-import json
 from datetime import datetime, timedelta, timezone
 
 from collect import BoardResult
@@ -86,7 +85,6 @@ li { background: var(--card-bg); border: 1px solid var(--card-border); border-ra
 .v-mild { color: var(--v-mild); }
 .v-cool { color: var(--v-cool); }
 .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-.tabs.periods { margin-top: 16px; margin-bottom: 0; }
 .tab-btn { font: inherit; font-size: 0.82rem; padding: 6px 12px; border-radius: 999px;
            border: 1px solid var(--tab-border); background: var(--tab-bg); color: var(--tab-fg); cursor: pointer; }
 .tab-btn:hover { border-color: var(--tag-fg); }
@@ -115,21 +113,6 @@ NAV_TABS = [
     ("poverty", "ニュー速（嫌儲）"),
 ]
 
-# (period id, nav label) — "now" is the existing run-to-run instantaneous
-# velocity; "24h" is the reply-count delta over the trailing 24h from the
-# archive DB. (A "7d" weekly period is planned but not wired up yet.)
-PERIOD_TABS = [
-    ("now", "現在の勢い"),
-    ("24h", "24時間"),
-]
-
-# Which board tabs exist per period. "now" has a full per-board breakdown;
-# other periods currently only offer the combined "all" view.
-PERIOD_BOARD_TABS = {
-    "now": NAV_TABS,
-    "24h": [NAV_TABS[0]],  # ("all", "総合")
-}
-
 
 def _fmt_jst(dt: datetime) -> str:
     return dt.astimezone(JST).strftime("%Y-%m-%d %H:%M JST")
@@ -157,7 +140,7 @@ def _velocity_class(rank: int, total: int) -> str:
     return "v-cool"
 
 
-def _render_rows(items: list[dict], board_names: dict[str, str], period: str) -> str:
+def _render_rows(items: list[dict], board_names: dict[str, str]) -> str:
     total = len(items)
     rows = []
     for i, t in enumerate(items, start=1):
@@ -168,10 +151,7 @@ def _render_rows(items: list[dict], board_names: dict[str, str], period: str) ->
         title = html.escape(html.unescape(t["title"]))
         url = html.escape(t["url"])
         vclass = _velocity_class(i, total)
-        if period == "now":
-            metric = f'<span class="velocity {vclass}">{t["velocity"]:.1f}/h</span>'
-        else:
-            metric = f'<span class="velocity {vclass}">+{t["delta"]}</span>'
+        metric = f'<span class="velocity {vclass}">{t["velocity"]:.1f}/h</span>'
         rows.append(
             f"""<li>
   <span class="rank">{i}</span>
@@ -184,30 +164,24 @@ def _render_rows(items: list[dict], board_names: dict[str, str], period: str) ->
 
 
 def render_html(
-    periods: dict[str, dict[str, list[dict]]],
+    rankings: dict[str, list[dict]],
     generated_at: datetime,
     board_results: list[BoardResult],
 ) -> str:
     board_names = {r.key: r.name for r in board_results}
     ok_count = sum(1 for r in board_results if r.ok)
 
-    period_buttons = "".join(
-        f'<button class="tab-btn period-btn{" active" if pid == "now" else ""}" data-period="{pid}">{label}</button>'
-        for pid, label in PERIOD_TABS
-    )
     nav_buttons = "".join(
         f'<button class="tab-btn board-btn{" active" if tab_id == "all" else ""}" data-tab="{tab_id}">{label}</button>'
         for tab_id, label in NAV_TABS
     )
     panels = "".join(
-        f'<ol id="tab-{pid}-{tab_id}" class="ranklist"{"" if (pid == "now" and tab_id == "all") else " hidden"}>'
-        f"{_render_rows(periods.get(pid, {}).get(tab_id, []), board_names, pid)}</ol>"
-        for pid, _ in PERIOD_TABS
-        for tab_id, _ in PERIOD_BOARD_TABS[pid]
+        f'<ol id="tab-{tab_id}" class="ranklist"{"" if tab_id == "all" else " hidden"}>'
+        f"{_render_rows(rankings.get(tab_id, []), board_names)}</ol>"
+        for tab_id, _ in NAV_TABS
     )
 
     status_lines = "".join(f"<li>{s}</li>" for s in _board_status_lines(board_results))
-    multi_board_periods = json.dumps([pid for pid, tabs in PERIOD_BOARD_TABS.items() if len(tabs) > 1])
 
     return f"""<!doctype html>
 <html lang="ja">
@@ -235,7 +209,6 @@ def render_html(
 <p class="meta">更新: {_fmt_jst(generated_at)}（15分毎に自動更新） / 板: {ok_count}/{len(board_results)} OK</p>
 <nav class="tabs" id="board-nav">{nav_buttons}</nav>
 {panels}
-<nav class="tabs periods">{period_buttons}</nav>
 <footer>
 <p>個人が趣味で作成した非公式のまとめサイトです。各スレッドへのリンク先は5ch.netの該当板です。</p>
 <p>板ステータス:</p>
@@ -243,36 +216,13 @@ def render_html(
 </footer>
 <script>
 (function () {{
-  var MULTI_BOARD_PERIODS = {multi_board_periods};
-  var boardNav = document.getElementById("board-nav");
-  var activePeriod = "now";
-  var activeBoard = "all";
-  function updateVisible() {{
-    document.querySelectorAll(".ranklist").forEach(function (ol) {{ ol.hidden = true; }});
-    var panel = document.getElementById("tab-" + activePeriod + "-" + activeBoard);
-    if (panel) panel.hidden = false;
-    boardNav.hidden = MULTI_BOARD_PERIODS.indexOf(activePeriod) === -1;
-  }}
-  document.querySelectorAll(".period-btn").forEach(function (btn) {{
-    btn.addEventListener("click", function () {{
-      document.querySelectorAll(".period-btn").forEach(function (b) {{ b.classList.remove("active"); }});
-      btn.classList.add("active");
-      activePeriod = btn.dataset.period;
-      if (MULTI_BOARD_PERIODS.indexOf(activePeriod) === -1) {{
-        activeBoard = "all";
-        document.querySelectorAll(".board-btn").forEach(function (b) {{
-          b.classList.toggle("active", b.dataset.tab === "all");
-        }});
-      }}
-      updateVisible();
-    }});
-  }});
   document.querySelectorAll(".board-btn").forEach(function (btn) {{
     btn.addEventListener("click", function () {{
       document.querySelectorAll(".board-btn").forEach(function (b) {{ b.classList.remove("active"); }});
       btn.classList.add("active");
-      activeBoard = btn.dataset.tab;
-      updateVisible();
+      document.querySelectorAll(".ranklist").forEach(function (ol) {{ ol.hidden = true; }});
+      var panel = document.getElementById("tab-" + btn.dataset.tab);
+      if (panel) panel.hidden = false;
     }});
   }});
 }})();
