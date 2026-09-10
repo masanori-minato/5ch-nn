@@ -6,6 +6,7 @@ import sys
 from datetime import datetime, timezone
 
 import collect
+import db
 import rank
 import render
 
@@ -21,6 +22,11 @@ def main() -> int:
     now = datetime.now(timezone.utc)
     new_threads = rank.update_state(state.get("threads", {}), board_results, now)
     rank.save_state(STATE_PATH, {"updated_at": now.isoformat(), "threads": new_threads})
+
+    try:
+        db.save_snapshot(db.get_client(), board_results, new_threads, now)
+    except Exception as exc:  # noqa: BLE001 - DB write must not block site generation
+        print(f"[build] Supabase save failed: {exc}", file=sys.stderr)
 
     top_n = cfg.get("top_n", 50)
     ranked = rank.top_n(new_threads, top_n)

@@ -24,17 +24,32 @@ collect.py  各板のsubject.txtを取得・パース(Shift_JIS)
      ↓
 rank.py     state/threads.json と突き合わせて「現在の勢い」(run間のレス増加速度)を計算・更新
      ↓
+db.py       Supabase(Postgres)の threads / thread_snapshots に書き込み(run毎に履歴を蓄積)
+     ↓
 render.py   docs/index.html を生成（板タブ）
      ↑
 build.py    上記を1コマンドで実行するオーケストレーター
 ```
+
+DB書き込みが失敗してもサイト生成は止めない(板取得失敗時と同じ「一部が落ちても全体は継続する」方針)。
+
+### データベース(Supabase)
+
+`state/threads.json`は最新状態を毎回上書きするだけなので、履歴を残すためにSupabase(Postgres)にも保存している。スキーマは[supabase/migrations/20260910000000_init_schema.sql](supabase/migrations/20260910000000_init_schema.sql)（Supabaseダッシュボードの SQL Editor で実行済み）。
+
+- `boards` — 板マスタ
+- `threads` — スレッドの識別情報(board_key + dat_idで一意)
+- `thread_snapshots` — 収集run毎のレス数・勢いのスナップショット(履歴)
+
+接続には環境変数`SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY`が必要(Supabaseダッシュボード → Project Settings → API から取得)。ローカルは`.env.example`をコピーして`.env`に値を入れる(`.env`はgit管理外)。GitHub Actions側はリポジトリのSecretsに同名で登録する。
 
 対象板・グローバル設定は [boards.yaml](boards.yaml) で管理。サーバーのサブドメインが変わって取得できなくなった板が出たら、[bbsmenu.html](https://menu.5ch.io/bbsmenu.html)で現在のURLを確認してここを更新してください（ページ下部の板ステータス欄で不調な板が分かります）。
 
 ## ローカル実行
 
 ```
-pip install requests PyYAML
+pip install -r requirements.txt
+cp .env.example .env  # SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY を入力
 python build.py
 ```
 

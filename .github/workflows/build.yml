@@ -29,9 +29,12 @@ jobs:
           python-version: "3.12"
 
       - name: Install deps
-        run: pip install requests PyYAML
+        run: pip install -r requirements.txt
 
       - name: Build site
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: python build.py
 
       - name: Commit and push
